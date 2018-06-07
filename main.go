@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	client "github.com/influxdata/influxdb/client/v2"
+	"server-monitor/influxdb"
+	// client "github.com/influxdata/influxdb/client/v2"
 )
 
 type Reader interface {
@@ -56,53 +56,27 @@ func (s *ReadFrom) Read(r chan []byte) {
 		r <- bts[:len(bts)-1]
 	}
 }
-
+type People struct{
+	Id int64
+	Name string
+	Age string
+}
 func (s *WriteTo) Write(w chan string) {
-	// Create a new HTTPClient
-	c, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://localhost:8086",
-		Username: username,
-		Password: password,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer c.Close()
-
-	// Create a new point batch
-	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  MyDB,
-		Precision: "s",
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create a point and add to batch
-	tags := map[string]string{"cpu": "cpu-total"}
-	fields := map[string]interface{}{
-		"idle":   10.1,
-		"system": 53.3,
-		"user":   46.6,
-	}
-
-	pt, err := client.NewPoint("cpu_usage", tags, fields, time.Now())
-	if err != nil {
-		log.Fatal(err)
-	}
-	bp.AddPoint(pt)
-
-	// Write the batch
-	if err := c.Write(bp); err != nil {
-		log.Fatal(err)
-	}
-
-	// Close client resources
-	if err := c.Close(); err != nil {
-		log.Fatal(err)
-	}
 	for data := range w {
 		fmt.Println(data)
+		c:=influxdb.Cli{
+			Addr:"http://localhost:8086",
+			Username:"bubba",
+			Password:"bumblebeetuna",
+			MyDB:"square_holes",
+			Precision:"ms",
+		}
+		c.InitHttp()
+		log.Println(c.WriteDB("s1",map[string]string{
+			"name":"zxy",
+		},map[string]interface{}{"key":"value"}))
+		log.Println(c.QueryDB("select *from s1"))
+		c.Session.Close()
 	}
 }
 
