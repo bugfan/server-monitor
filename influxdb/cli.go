@@ -4,15 +4,15 @@ import (
 	"log"
 	"fmt"
 	"time"
-	"github.com/influxdata/influxdb/client/v2"
+	client "github.com/influxdata/influxdb/client/v2"
 )
 type Cli struct{
 	MyDB,Username,Password,Addr,Precision string
-	session client.Client
+	Session client.Client
 }
 func (c * Cli) InitHttp() (err error) {
 	// Create a new HTTPClient
-	c.session, err = client.NewHTTPClient(client.HTTPConfig{
+	c.Session, err = client.NewHTTPClient(client.HTTPConfig{
 		Addr:     c.Addr,	// "http://localhost:8086",
 		Username: c.Username,
 		Password: c.Password,
@@ -50,7 +50,7 @@ func (c * Cli) WriteDB(table string,tags map[string]string,fields map[string]int
 	}
 	bp.AddPoint(pt)
 	// Write the batch
-	if err := c.session.Write(bp); err != nil {
+	if err := c.Session.Write(bp); err != nil {
 		log.Println(err)
 		return err
 	}
@@ -62,7 +62,7 @@ func (c * Cli) QueryDB(cmd string) (res []client.Result, err error) {
 		Command:  cmd,
 		Database: c.MyDB,
 	}
-	if response, err := c.session.Query(q); err == nil {
+	if response, err := c.Session.Query(q); err == nil {
 		if response.Error() != nil {
 			return res, response.Error()
 		}
