@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"os"
+	"server-monitor/influxdb"
 	"strings"
 	"time"
-	"server-monitor/influxdb"
 	// client "github.com/influxdata/influxdb/client/v2"
 )
 
@@ -56,26 +56,31 @@ func (s *ReadFrom) Read(r chan []byte) {
 		r <- bts[:len(bts)-1]
 	}
 }
-type People struct{
-	Id int64
+
+type People struct {
+	Id   int64
 	Name string
-	Age string
+	Age  string
 }
+
 func (s *WriteTo) Write(w chan string) {
 	for data := range w {
-		fmt.Println(data)
-		c:=influxdb.Cli{
-			Addr:"http://localhost:8086",
-			Username:"bubba",
-			Password:"bumblebeetuna",
-			MyDB:"square_holes",
-			Precision:"ms",
+		// fmt.Println(data)
+		c := influxdb.Cli{
+			Addr:      "http://localhost:8086",
+			Username:  "admin",
+			Password:  "123456",
+			MyDB:      "mydb",
+			Precision: "ms",
 		}
 		c.InitHttp()
-		log.Println(c.WriteDB("s1",map[string]string{
-			"name":"zxy",
-		},map[string]interface{}{"key":"value"}))
-		log.Println(c.QueryDB("select *from s1"))
+		err := c.WriteDB("table1", map[string]string{
+			"name": "zxy",
+		}, map[string]interface{}{"time": time.Now().Unix(), "value": rand.Intn(100), "str": data})
+		if err != nil {
+			log.Println(err)
+		}
+		// log.Println(c.QueryDB("select *from table1"))
 		c.Session.Close()
 	}
 }
@@ -89,7 +94,7 @@ func (s *LogProcess) Process() {
 
 func main() {
 	r := ReadFrom{
-		path: "./a.txt",
+		path: "./log.txt",
 	}
 	w := WriteTo{
 		path: "./b.txt",

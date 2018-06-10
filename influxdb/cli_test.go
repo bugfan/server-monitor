@@ -1,30 +1,40 @@
 package influxdb
-import(
-	"testing"
+
+import (
 	"log"
+	"testing"
 )
-func  TestInfluxDB(t *testing.T){
-	c:=Cli{
-		Addr:"http://localhost:8086",
-		Username:"bubba",
-		Password:"bumblebeetuna",
-		MyDB:"square_holes",
-		Precision:"ms",
+
+/*
+*	使用步骤:
+* 	1实例化一个叫做Cli的对像,并调用初始化函数，目前只用http方式，udp的没有用
+* 	2初始化之后返回一个操作influxdb的session 使用这个session来操作influxdb(基本只用到querydb和writedb这两个函数就ok)
+* 	3最后用完这个session把它关闭
+ */
+func TestInfluxDB(t *testing.T) {
+	c := Cli{
+		Addr:      "http://localhost:8086",
+		Username:  "bubba",
+		Password:  "bumblebeetuna",
+		MyDB:      "square_holes",
+		Precision: "ms",
 	}
 	c.InitHttp()
-	log.Println(c.WriteDB("mytable",map[string]string{
-		"name":"zxy",
-	},map[string]interface{}{
-		"age":24,
-		"tall":map[string]int{"clear":172,"notclear":174},
+	log.Println(c.WriteDB("mytable", map[string]string{
+		"name": "zxy",
+	}, map[string]interface{}{
+		"age":  24,
+		"tall": map[string]int{"clear": 172, "notclear": 174},
 	}))
 	log.Println(c.QueryDB("select *from cpu_usage"))
+	c.Session.Close()
 }
-func  TestPerson(t *testing.T){
+func TestPerson(t *testing.T) {
 	log.Println("测试一下那天那个牛逼面试官的话")
 }
+
 /*
-* 	创建好数据库再使用 
+* 	创建好数据库再使用
 * 1.指定执行某个函数：go test -test.run TestPerson
 * 2.使用：
 　　1、文件名必须以xx_test.go命名
