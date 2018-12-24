@@ -57,24 +57,14 @@ func (s *ReadFrom) Read(r chan []byte) {
 	}
 }
 
-type People struct {
-	Id   int64
-	Name string
-	Age  string
-}
-
 func (s *WriteTo) Write(w chan string) {
 	for data := range w {
 		// fmt.Println(data)
-		c := influxdb.Cli{
-			Addr:      "http://localhost:8086",
-			Username:  "admin",
-			Password:  "123456",
-			MyDB:      "mydb",
-			Precision: "ms",
+		c, err := influxdb.NewClient("http://127.0.0.1:8086", "admin", "123456", "mydb", "ms")
+		if err != nil {
+			log.Println("新建失败:", err)
 		}
-		c.InitHttp()
-		err := c.WriteDB("table1", map[string]string{
+		err = c.WriteDB("table1", map[string]string{
 			"name": "zxy",
 		}, map[string]interface{}{"time": time.Now().Unix(), "value": rand.Intn(100), "str": data})
 		if err != nil {
@@ -108,6 +98,5 @@ func main() {
 	go lp.read.Read(lp.readChan)
 	go lp.Process()
 	go lp.write.Write(lp.writeChan)
-
 	<-(chan bool)(nil)
 }

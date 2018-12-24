@@ -1,37 +1,47 @@
 package influxdb
 
 import (
-	"log"
 	"fmt"
+	"log"
 	"time"
+
 	client "github.com/influxdata/influxdb/client/v2"
 )
-type Cli struct{
-	MyDB,Username,Password,Addr,Precision string
-	Session client.Client
+
+type Client struct {
+	dbName, username, password, addr, precision string
+	Session                                     client.Client
+	reader                                      client.Query
+	writer                                      client.BatchPoints
 }
-func (c * Cli) InitHttp() (err error) {
-	// Create a new HTTPClient
+
+func NewClient(addr, username, password, dbName, precision string) (*Client, error) {
+	c := &Client{
+		precision: precision,
+		dbName:    dbName,
+	}
+	if c.precision == "" {
+		c.precision = "s" // 默认设置为秒
+	}
+	var err error
 	c.Session, err = client.NewHTTPClient(client.HTTPConfig{
-		Addr:     c.Addr,	// "http://localhost:8086",
-		Username: c.Username,
-		Password: c.Password,
+		Addr:     addr,
+		Username: username,
+		Password: password,
+		// Precision: precision,
 	})
-	if c.Precision==""{	
-		c.Precision="s"		// 默认设置为秒 
-	}
 	if err != nil {
-		log.Println(err)
-		return err
+		return nil, err
 	}
-	return nil
+	return c, nil
 }
+
 // 存数据   这个数据库自动扩展字段
-func (c * Cli) WriteDB(table string,tags map[string]string,fields map[string]interface{})error {
+func (c *Client) WriteDB(table string, tags map[string]string, fields map[string]interface{}) error {
 	// Create a new point batch
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  c.MyDB,
-		Precision: c.Precision,
+		Database:  c.dbName,
+		Precision: c.precision,
 	})
 	if err != nil {
 		log.Println(err)
@@ -56,11 +66,12 @@ func (c * Cli) WriteDB(table string,tags map[string]string,fields map[string]int
 	}
 	return nil
 }
+
 // QueryDB convenience function to query the database
-func (c * Cli) QueryDB(cmd string) (res []client.Result, err error) {
+func (c *Client) QueryDB(cmd string) (res []client.Result, err error) {
 	q := client.Query{
 		Command:  cmd,
-		Database: c.MyDB,
+		Database: c.dbName,
 	}
 	if response, err := c.Session.Query(q); err == nil {
 		if response.Error() != nil {
@@ -72,8 +83,9 @@ func (c * Cli) QueryDB(cmd string) (res []client.Result, err error) {
 	}
 	return res, nil
 }
+
 // 创建数据库
-func (c * Cli) CreateDB(db string) error {
+func (c *Client) CreateDB(db string) error {
 	_, err := c.QueryDB(fmt.Sprintf("CREATE DATABASE %s", db))
 	if err != nil {
 		log.Println(err)

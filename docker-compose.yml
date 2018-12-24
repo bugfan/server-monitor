@@ -1,0 +1,18 @@
+version: "3"
+services:
+  redis:
+      image: influxdb:1.6
+      container_name: my_influxdb
+      restart: always
+      environment:
+      - INFLUXDB_DB=mydb 
+      - INFLUXDB_ADMIN_ENABLED=true 
+      - INFLUXDB_ADMIN_USER=admin 
+      - INFLUXDB_ADMIN_PASSWORD=123456 
+      - INFLUXDB_USER=admin 
+      - INFLUXDB_USER_PASSWORD=123456 
+      ports:
+        - 8086:8086
+      volumes:
+        - $PWD:/var/lib/influxdb
+  
